@@ -1,0 +1,39 @@
+name: Publish RC3 Windows preview release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'downloads/NeoRealism.Launcher.5.5.RC3.exe'
+      - 'downloads/NeoRealism.Launcher.5.5.RC3.exe.sha256'
+      - '.github/workflows/publish-rc3-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify EXE SHA-256
+        shell: bash
+        run: |
+          cd downloads
+          sha256sum -c NeoRealism.Launcher.5.5.RC3.exe.sha256
+      - name: Publish public GitHub prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v5.5.0-rc3 >/dev/null 2>&1; then
+            echo "RC3 prerelease already exists; no overwrite"
+            exit 0
+          fi
+          gh release create v5.5.0-rc3 \
+            "downloads/NeoRealism.Launcher.5.5.RC3.exe" \
+            "downloads/NeoRealism.Launcher.5.5.RC3.exe.sha256" \
+            --title "NeoRealism Launcher 5.5 — RC3 Design (UNSIGNED PREVIEW)" \
+            --prerelease \
+            --notes-file RC3_RELEASE_NOTES.md
